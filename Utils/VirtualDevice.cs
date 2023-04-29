@@ -1,6 +1,9 @@
 ﻿using Microsoft.Azure.Devices.Client;
+using Newtonsoft.Json;
 using Opc.UaFx;
 using Opc.UaFx.Client;
+using System.Net.Mime;
+using System.Text;
 
 namespace Utils
 {
@@ -30,6 +33,43 @@ namespace Utils
             }
             await Task.Delay(0);
         }
+
+        #region SendingMessages
+        public async Task SendMessage(OpcReadNode[] telemetry, int ms)
+        {
+            while(true) 
+            {
+                Console.WriteLine("Sending a message to IoTHub...");
+
+                var job = opcClient.ReadNodes(telemetry);
+
+                List<object> l = new List<object>();
+                foreach (var item in job)
+                {
+                    l.Add(item.Value);
+                }
+
+                var data = new
+                {
+                    DeviceName = selectedDevice,
+                    ProductionStatus = l[0],
+                    WorkorderId = l[1],
+                    GoodCount = l[2],
+                    BadCount = l[3],
+                    Temperature = l[4]
+                };
+
+                var dataString = JsonConvert.SerializeObject(data);
+
+                Message eventMessage = new Message(Encoding.UTF8.GetBytes(dataString));
+                eventMessage.ContentType = MediaTypeNames.Application.Json;
+                eventMessage.ContentEncoding = "utf-8";
+
+                await client.SendEventAsync(eventMessage);
+                await Task.Delay(ms);
+            }
+        }
+        #endregion
 
         #region DirectMethods
         private async Task<MethodResponse> EmergencyStopHandler(MethodRequest methodRequest, object userContext)

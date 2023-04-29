@@ -6,16 +6,16 @@ using Opc.UaFx;
 Console.WriteLine("Enter Azure device connection string:"); //placeholder
 string deviceConnectionString = Console.ReadLine();
 
-using (var client = new OpcClient("opc.tcp://localhost:4840/"))
+using (var opcClient = new OpcClient("opc.tcp://localhost:4840/"))
 {
     try
     {
-        client.Connect();
+        opcClient.Connect();
         Console.WriteLine("Connection success");
 
         //Create a list of all devices
         List<string> deviceList = new List<string>();
-        var node = client.BrowseNode(OpcObjectTypes.ObjectsFolder); //Start from the 'root' of all Nodes of the Server
+        var node = opcClient.BrowseNode(OpcObjectTypes.ObjectsFolder); //Start from the 'root' of all Nodes of the Server
         foreach (var childNode in node.Children())
         {
             if (childNode.DisplayName.Value != "Server")
@@ -25,7 +25,7 @@ using (var client = new OpcClient("opc.tcp://localhost:4840/"))
         }
 
         //Display the list of devices
-        Console.WriteLine("Available devices:");
+        Console.WriteLine("\nAvailable devices:");
         foreach (var device in deviceList)
         {
             Console.WriteLine(device);
@@ -42,11 +42,22 @@ using (var client = new OpcClient("opc.tcp://localhost:4840/"))
         //Azure
         using var deviceClient = DeviceClient.CreateFromConnectionString(deviceConnectionString, TransportType.Mqtt);
         await deviceClient.OpenAsync();
-        var vdevice = new VirtualDevice(deviceClient, client, selectedDevice);
-        await vdevice.InitializeHandlers();
+        var vDevice = new VirtualDevice(deviceClient, opcClient, selectedDevice);
+        await vDevice.InitializeHandlers();
+
+        //Telemetry Data Nodes for D2C
+        var telemetry = new OpcReadNode[]
+        {
+            new OpcReadNode("ns=2;s=" + selectedDevice + "/ProductionStatus"),
+            new OpcReadNode("ns=2;s=" + selectedDevice + "/WorkorderId"),
+            new OpcReadNode("ns=2;s=" + selectedDevice + "/GoodCount"),
+            new OpcReadNode("ns=2;s=" + selectedDevice + "/BadCount"),
+            new OpcReadNode("ns=2;s=" + selectedDevice + "/Temperature")
+        };
 
         //Main loop
         Console.WriteLine("\nWorking...");
+        await vDevice.SendMessage(telemetry, 2000);
         while (true) { }
     }
     catch (Exception e)
