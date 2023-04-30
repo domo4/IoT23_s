@@ -55,6 +55,37 @@ using (var opcClient = new OpcClient("opc.tcp://localhost:4840/"))
             new OpcReadNode("ns=2;s=" + selectedDevice + "/Temperature")
         };
 
+        //Device Twins for reported properties
+        async Task TwinCaller(bool sendEvent)
+        {
+            await vDevice.UpdateTwinAsync();
+            if(sendEvent)
+            {
+                await vDevice.SendEventMessage();
+            }
+            
+        }
+
+        void HandleDataChangedDeviceError(object sender, OpcDataChangeReceivedEventArgs e)
+        {
+            _ = TwinCaller(true);
+        }
+
+        void HandleDataChangedProductionRate(object sender, OpcDataChangeReceivedEventArgs e)
+        {
+            _ = TwinCaller(false);
+        }
+
+        //Monitoring Device Errors & Production Rate
+        OpcSubscribeDataChange[] monitoredNodes = new OpcSubscribeDataChange[]
+        {
+            new OpcSubscribeDataChange("ns=2;s=" + selectedDevice + "/DeviceError", HandleDataChangedDeviceError),
+            new OpcSubscribeDataChange("ns=2;s=" + selectedDevice + "/ProductionRate", HandleDataChangedProductionRate)
+        };
+        OpcSubscription subscription = opcClient.SubscribeNodes(monitoredNodes);
+        subscription.PublishingInterval = 500; //Interval value in ms
+        subscription.ApplyChanges(); //Alway call it after modifying the sub, otherwise server won't know the new sub config
+
         //Main loop
         Console.WriteLine("\nWorking...");
         await vDevice.SendMessage(telemetry, 2000);

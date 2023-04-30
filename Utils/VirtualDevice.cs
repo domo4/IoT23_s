@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Shared;
 using Newtonsoft.Json;
 using Opc.UaFx;
 using Opc.UaFx.Client;
@@ -39,7 +40,7 @@ namespace Utils
         {
             while(true) 
             {
-                Console.WriteLine("Sending a message to IoTHub...");
+                Console.WriteLine($"{DateTime.Now}: Sending a message to IoTHub...");
 
                 var job = opcClient.ReadNodes(telemetry);
 
@@ -64,10 +65,61 @@ namespace Utils
                 Message eventMessage = new Message(Encoding.UTF8.GetBytes(dataString));
                 eventMessage.ContentType = MediaTypeNames.Application.Json;
                 eventMessage.ContentEncoding = "utf-8";
+                eventMessage.Properties.Add("MessageType", "Telemetry");
 
                 await client.SendEventAsync(eventMessage);
                 await Task.Delay(ms);
             }
+        }
+
+        public async Task SendEventMessage()
+        {
+            Console.WriteLine($"{DateTime.Now}: Sending an event message to IoTHub...");
+
+            var deviceError = new OpcReadNode("ns=2;s=" + selectedDevice + "/DeviceError");
+            var data = new
+            {
+                DeviceName = selectedDevice,
+                DeviceError = opcClient.ReadNode(deviceError).Value
+            };
+            var dataString = JsonConvert.SerializeObject(data);
+
+            Message eventMessage = new Message(Encoding.UTF8.GetBytes(dataString));
+            eventMessage.ContentType = MediaTypeNames.Application.Json;
+            eventMessage.ContentEncoding = "utf-8";
+            eventMessage.Properties.Add("MessageType", "Event");
+
+            await client.SendEventAsync(eventMessage);
+        }
+        #endregion
+
+        #region DeviceTwin
+        public async Task UpdateTwinAsync()
+        {
+            var reportedProperties = new TwinCollection();
+            var deviceError = new OpcReadNode("ns=2;s=" + selectedDevice + "/DeviceError");
+            var productionRate = new OpcReadNode("ns=2;s=" + selectedDevice + "/ProductionRate");
+            reportedProperties["DeviceError"] = opcClient.ReadNode(deviceError).Value;
+            reportedProperties["ProductionRate"] = opcClient.ReadNode(productionRate).Value;
+
+            await client.UpdateReportedPropertiesAsync(reportedProperties);
+        }
+
+        private async Task UpdateDesiredTwinAsync()
+        {
+            var reportedProperties = new TwinCollection();
+            var productionRate = new OpcReadNode("ns=2;s=" + selectedDevice + "/ProductionRate");
+            reportedProperties["ProductionRate"] = opcClient.ReadNode(productionRate).Value;
+
+            await client.UpdateReportedPropertiesAsync(reportedProperties);
+        }
+
+        private async Task OnDesiredPropertyChanged(TwinCollection desiredProperties, object _)
+        {
+            var twin = await client.GetTwinAsync();
+            Int32 productionRate = twin.Properties.Desired["ProductionRate"];
+            OpcStatus result = opcClient.WriteNode("ns=2;s=" + selectedDevice + "/ProductionRate", productionRate);
+            await UpdateDesiredTwinAsync();
         }
         #endregion
 
@@ -97,6 +149,7 @@ namespace Utils
             await client.SetMethodDefaultHandlerAsync(DefaultServiceHandler, client);
             await client.SetMethodHandlerAsync("EmergencyStop", EmergencyStopHandler, client);
             await client.SetMethodHandlerAsync("ResetErrorStatus", ResetErrorStatusHandler, client);
+            await client.SetDesiredPropertyUpdateCallbackAsync(OnDesiredPropertyChanged, client);
         }
     }
 }
