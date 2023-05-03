@@ -4,17 +4,28 @@ using Opc.UaFx.Client;
 using Opc.UaFx;
 
 //Read IIoTsimDeviceName:AzurePrimaryConnectionString pairs
+string filename = "config.txt";
 IDictionary<string, string> devices = new Dictionary<string, string>();
-using(StreamReader file = new StreamReader("config.txt"))
+if (File.Exists(filename))
 {
-    string? line;
-    string[] split;
-    while ((line = file.ReadLine()) != null)
+    using (StreamReader file = new StreamReader(filename))
     {
-        split = line.Split(':');
-        devices.Add(split[0], split[1]);
+        string? line;
+        string[] split;
+        while ((line = file.ReadLine()) != null)
+        {
+            split = line.Split(':');
+            devices.Add(split[0], split[1]);
+        }
+        file.Close();
     }
-    file.Close();
+}
+else
+{
+    Console.WriteLine("Couldn't find config.txt file in main executable directory.\n" +
+        "Please create a new one according to the documentation. Press anything to exit.");
+    Console.ReadKey();
+    Environment.Exit(0);
 }
 
 using (var opcClient = new OpcClient("opc.tcp://localhost:4840/"))
