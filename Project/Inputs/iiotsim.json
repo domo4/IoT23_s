@@ -1,0 +1,20 @@
+{
+    "Name": "iiotsim",
+    "Type": "Data Stream",
+    "DataSourceType": "IoT Hub",
+    "IoTHubProperties": {
+        "IotHubNamespace": "IoT2023centrum",
+        "Endpoint": "messages/events",
+        "SharedAccessPolicyName": "iothubowner",
+        "SharedAccessPolicyKey": "********",
+        "ConsumerGroupName": "$Default"
+    },
+    "DataSourceCredentialDomain": "e8361719-211b-4f44-866f-89ab65e16ee7.StreamAnalystics",
+    "Serialization": {
+        "Type": "Json",
+        "Encoding": "UTF8"
+    },
+    "PartitionKey": "",
+    "CompressionType": "None",
+    "ScriptType": "Input"
+}

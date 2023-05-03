@@ -1,0 +1,26 @@
+{
+    "name": "Project",
+    "startFile": "Transformation.asaql",
+    "configurations": [
+        {
+            "filePath": "JobConfig.json",
+            "subType": "JobConfig"
+        },
+        {
+            "filePath": "Outputs/device-errors.json",
+            "subType": "Output"
+        },
+        {
+            "filePath": "Outputs/production-kpi.json",
+            "subType": "Output"
+        },
+        {
+            "filePath": "Outputs/temperature.json",
+            "subType": "Output"
+        },
+        {
+            "filePath": "Inputs/iiotsim.json",
+            "subType": "Input"
+        }
+    ]
+}

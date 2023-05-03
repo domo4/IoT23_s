@@ -1,0 +1,27 @@
+SELECT 
+    System.TIMESTAMP() as Time,
+    DeviceName, 
+    AVG(Temperature) AS AvgTemp_5, 
+    MIN(Temperature) AS MinTemp_5, 
+    MAX(Temperature) AS MaxTemp_5
+INTO [temperature]
+FROM [iiotsim] TIMESTAMP BY IoTHub.EnqueuedTime
+GROUP BY DeviceName, HoppingWindow(minute, 5, 1)
+
+SELECT
+    System.TIMESTAMP() as Time,
+    DeviceName,
+    MAX(GoodCount) / (MAX(GoodCount) + MAX(BadCount)) AS KPI
+INTO [production-kpi]
+FROM [iiotsim] TIMESTAMP BY IoTHub.EnqueuedTime
+GROUP BY DeviceName, TumblingWindow(minute, 5)
+
+SELECT
+    System.TIMESTAMP() as Time,
+    DeviceName,
+    COUNT(DeviceError)
+INTO [device-errors]
+FROM [iiotsim] TIMESTAMP BY IoTHub.EnqueuedTime
+WHERE DeviceError IS NOT NULL AND DeviceError != 0
+GROUP BY DeviceName, SlidingWindow(minute, 1)
+HAVING COUNT(DeviceError) > 3
