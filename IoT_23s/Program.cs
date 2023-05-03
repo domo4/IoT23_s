@@ -3,8 +3,19 @@ using Microsoft.Azure.Devices.Client;
 using Opc.UaFx.Client;
 using Opc.UaFx;
 
-Console.WriteLine("Enter Azure device connection string:"); //placeholder
-string deviceConnectionString = Console.ReadLine();
+//Read IIoTsimDeviceName:AzurePrimaryConnectionString pairs
+IDictionary<string, string> devices = new Dictionary<string, string>();
+using(StreamReader file = new StreamReader("config.txt"))
+{
+    string? line;
+    string[] split;
+    while ((line = file.ReadLine()) != null)
+    {
+        split = line.Split(':');
+        devices.Add(split[0], split[1]);
+    }
+    file.Close();
+}
 
 using (var opcClient = new OpcClient("opc.tcp://localhost:4840/"))
 {
@@ -40,7 +51,7 @@ using (var opcClient = new OpcClient("opc.tcp://localhost:4840/"))
         }
 
         //Azure
-        using var deviceClient = DeviceClient.CreateFromConnectionString(deviceConnectionString, TransportType.Mqtt);
+        using var deviceClient = DeviceClient.CreateFromConnectionString(devices[selectedDevice], TransportType.Mqtt);
         await deviceClient.OpenAsync();
         var vDevice = new VirtualDevice(deviceClient, opcClient, selectedDevice);
         await vDevice.InitializeHandlers();
