@@ -3,8 +3,9 @@ using Microsoft.Azure.Devices.Client;
 using Opc.UaFx.Client;
 using Opc.UaFx;
 
-//Read IIoTsimDeviceName:AzurePrimaryConnectionString pairs
+//Read opcAddress & IIoTsimDeviceName:AzurePrimaryConnectionString pairs
 string filename = "config.txt";
+string opcAddress = "opc.tcp://localhost:4840/"; //default value
 IDictionary<string, string> devices = new Dictionary<string, string>();
 if (File.Exists(filename))
 {
@@ -12,10 +13,17 @@ if (File.Exists(filename))
     {
         string? line;
         string[] split;
+        int i = 0;
         while ((line = file.ReadLine()) != null)
         {
-            split = line.Split(':');
-            devices.Add(split[0], split[1]);
+            i++;
+            if (line[0] == '#') continue;
+            if (i == 2) opcAddress = line;
+            else
+            {
+                split = line.Split(':');
+                devices.Add(split[0], split[1]);
+            }
         }
         file.Close();
     }
@@ -28,7 +36,7 @@ else
     Environment.Exit(0);
 }
 
-using (var opcClient = new OpcClient("opc.tcp://localhost:4840/"))
+using (var opcClient = new OpcClient(opcAddress))
 {
     try
     {
