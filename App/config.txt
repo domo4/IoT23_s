@@ -1,0 +1,11 @@
+#opcUaServerAddress
+opc.tcp://localhost:4840/
+#D2C Telemetry Message Interval in ms
+2000
+#D2C Event Message Publishing Interval in ms
+500
+#DeviceName:DeviceConnectionString
+ExampleDeviceNameFromOpcUa1:ExamplePrimaryConnectionStringFromCorrespondingIoTHubDevice1
+ExampleDeviceNameFromOpcUa2:ExamplePrimaryConnectionStringFromCorrespondingIoTHubDevice2
+...
+ExampleDeviceNameFromOpcUaN:ExamplePrimaryConnectionStringFromCorrespondingIoTHubDeviceN
