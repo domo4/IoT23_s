@@ -3,9 +3,11 @@ using Microsoft.Azure.Devices.Client;
 using Opc.UaFx.Client;
 using Opc.UaFx;
 
-//Read opcAddress & IIoTsimDeviceName:AzurePrimaryConnectionString pairs
+//Read opcAddress, msgInterval, publishingInterval & IIoTsimDeviceName:AzurePrimaryConnectionString pairs
 string filename = "config.txt";
 string opcAddress = "opc.tcp://localhost:4840/"; //default value
+int msgInterval = 2000; //default value
+int publishingInterval = 500; //default value
 IDictionary<string, string> devices = new Dictionary<string, string>();
 if (File.Exists(filename))
 {
@@ -18,11 +20,21 @@ if (File.Exists(filename))
         {
             i++;
             if (line[0] == '#') continue;
-            if (i == 2) opcAddress = line;
-            else
+            switch(i)
             {
-                split = line.Split(':');
-                devices.Add(split[0], split[1]);
+                case 2:
+                    opcAddress = line;
+                    break;
+                case 4:
+                    Int32.TryParse(line, out msgInterval);
+                    break;
+                case 6:
+                    Int32.TryParse(line, out publishingInterval);
+                    break;
+                default:
+                    split = line.Split(':');
+                    devices.Add(split[0], split[1]);
+                    break;
             }
         }
         file.Close();
