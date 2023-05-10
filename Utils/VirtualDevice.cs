@@ -21,8 +21,9 @@ namespace Utils
             this.selectedDevice = selectedDevice;
         }
 
-        public async Task MethodCaller(int method)
+        private async Task MethodCaller(int method)
         {
+            //Call selected method node
             switch(method)
             {
                 case 0:
@@ -42,8 +43,10 @@ namespace Utils
             {
                 Console.WriteLine($"{DateTime.Now}: Sending a message to IoTHub...");
 
+                //Read selected nodes from OPC UA server
                 var job = opcClient.ReadNodes(telemetry);
 
+                //Create a list containing read data, and convert it to JSON afterwards
                 List<object> l = new List<object>();
                 foreach (var item in job)
                 {
@@ -67,6 +70,7 @@ namespace Utils
                 eventMessage.ContentEncoding = "utf-8";
                 eventMessage.Properties.Add("MessageType", "Telemetry");
 
+                //Send D2C message containing telemetry data
                 await client.SendEventAsync(eventMessage);
                 await Task.Delay(ms);
             }
@@ -76,6 +80,7 @@ namespace Utils
         {
             Console.WriteLine($"{DateTime.Now}: Sending an event message to IoTHub...");
 
+            //Read DeviceError and create JSON that contains device name and the error value
             var deviceError = new OpcReadNode("ns=2;s=" + selectedDevice + "/DeviceError");
             var data = new
             {
@@ -89,6 +94,7 @@ namespace Utils
             eventMessage.ContentEncoding = "utf-8";
             eventMessage.Properties.Add("MessageType", "Event");
 
+            //Send D2C message containing event data
             await client.SendEventAsync(eventMessage);
         }
         #endregion
@@ -96,6 +102,7 @@ namespace Utils
         #region DeviceTwin
         public async Task UpdateTwinAsync()
         {
+            //Update reported properties of device twin
             var reportedProperties = new TwinCollection();
             var deviceError = new OpcReadNode("ns=2;s=" + selectedDevice + "/DeviceError");
             var productionRate = new OpcReadNode("ns=2;s=" + selectedDevice + "/ProductionRate");
@@ -107,6 +114,7 @@ namespace Utils
 
         private async Task UpdateDesiredTwinAsync()
         {
+            //Update production rate in reported properties of device twin, after changing desired properties
             var reportedProperties = new TwinCollection();
             var productionRate = new OpcReadNode("ns=2;s=" + selectedDevice + "/ProductionRate");
             reportedProperties["ProductionRate"] = opcClient.ReadNode(productionRate).Value;
@@ -116,8 +124,10 @@ namespace Utils
 
         private async Task OnDesiredPropertyChanged(TwinCollection desiredProperties, object _)
         {
+            //Get production rate from desired properties of device twin
             var twin = await client.GetTwinAsync();
             Int32 productionRate = twin.Properties.Desired["ProductionRate"];
+            //Set the production rate on the device in OPC UA server
             OpcStatus result = opcClient.WriteNode("ns=2;s=" + selectedDevice + "/ProductionRate", productionRate);
             await UpdateDesiredTwinAsync();
         }
@@ -146,6 +156,7 @@ namespace Utils
 
         public async Task InitializeHandlers()
         {
+            //Initialize handlers for direct methods & device twin
             await client.SetMethodDefaultHandlerAsync(DefaultServiceHandler, client);
             await client.SetMethodHandlerAsync("EmergencyStop", EmergencyStopHandler, client);
             await client.SetMethodHandlerAsync("ResetErrorStatus", ResetErrorStatusHandler, client);

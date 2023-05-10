@@ -126,7 +126,7 @@ using (var opcClient = new OpcClient(opcAddress))
         };
         OpcSubscription subscription = opcClient.SubscribeNodes(monitoredNodes);
         subscription.PublishingInterval = publishingInterval; //Interval value in ms
-        subscription.ApplyChanges(); //Alway call it after modifying the sub, otherwise server won't know the new sub config
+        subscription.ApplyChanges(); //Always call it after modifying the sub, otherwise server won't know the new sub config
 
         //Main loop
         Console.WriteLine("\nWorking...");
@@ -136,5 +136,6 @@ using (var opcClient = new OpcClient(opcAddress))
     catch (Exception e)
     {
         Console.WriteLine("Failed to connect to server. Press anything to exit.");
+        Console.ReadKey();
     }
 }
