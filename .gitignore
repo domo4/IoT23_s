@@ -3,8 +3,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# White-list Publish
-!/Publish*
+# White-list .pdb files in /App
+!/App/*
 
 # User-specific files
 *.rsuser
