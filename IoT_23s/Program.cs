@@ -125,12 +125,12 @@ using (var opcClient = new OpcClient(opcAddress))
             new OpcSubscribeDataChange("ns=2;s=" + selectedDevice + "/ProductionRate", HandleDataChangedProductionRate)
         };
         OpcSubscription subscription = opcClient.SubscribeNodes(monitoredNodes);
-        subscription.PublishingInterval = 500; //Interval value in ms
+        subscription.PublishingInterval = publishingInterval; //Interval value in ms
         subscription.ApplyChanges(); //Alway call it after modifying the sub, otherwise server won't know the new sub config
 
         //Main loop
         Console.WriteLine("\nWorking...");
-        await vDevice.SendMessage(telemetry, 2000);
+        await vDevice.SendMessage(telemetry, msgInterval);
         while (true) { }
     }
     catch (Exception e)
