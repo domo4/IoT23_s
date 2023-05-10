@@ -41,7 +41,7 @@ namespace Utils
         {
             while(true) 
             {
-                Console.WriteLine($"{DateTime.Now}: Sending a message to IoTHub...");
+                Console.WriteLine($"[{selectedDevice}] {DateTime.Now}: Sending a message to IoTHub...");
 
                 //Read selected nodes from OPC UA server
                 var job = opcClient.ReadNodes(telemetry);
@@ -78,7 +78,7 @@ namespace Utils
 
         public async Task SendEventMessage()
         {
-            Console.WriteLine($"{DateTime.Now}: Sending an event message to IoTHub...");
+            Console.WriteLine($"[{selectedDevice}] {DateTime.Now}: Sending an event message to IoTHub...");
 
             //Read DeviceError and create JSON that contains device name and the error value
             var deviceError = new OpcReadNode("ns=2;s=" + selectedDevice + "/DeviceError");
